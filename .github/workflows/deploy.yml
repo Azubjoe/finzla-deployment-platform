@@ -32,8 +32,6 @@ jobs:
     if: ${{ inputs.deploy == true }}
     runs-on: ubuntu-latest
 
-    environment: development
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

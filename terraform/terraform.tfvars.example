@@ -1,5 +1,5 @@
 # ACM certificate must exist in the same AWS region as the ALB.
-# acm_certificate_arn = "arn:aws:acm:eu-west-1:123456789012:certificate/example"
+acm_certificate_arn = "arn:aws:acm:eu-west-1:123456789012:certificate/REPLACE_ME"
 
 aws_region   = "eu-west-1"
 project_name = "finzla-cloud-platform"
