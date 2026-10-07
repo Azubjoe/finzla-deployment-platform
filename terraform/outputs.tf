@@ -57,3 +57,8 @@ output "github_deploy_role_arn" {
   description = "IAM role assumed by GitHub Actions through OIDC"
   value       = aws_iam_role.github_deploy.arn
 }
+
+output "alerts_sns_topic_arn" {
+  description = "SNS topic used for operational CloudWatch alarms"
+  value       = aws_sns_topic.alerts.arn
+}
