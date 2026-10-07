@@ -64,3 +64,22 @@ variable "ecs_task_memory" {
   type        = number
   default     = 512
 }
+
+variable "acm_certificate_arn" {
+  description = "ARN of the ACM certificate used by the HTTPS ALB listener"
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "github_repository" {
+  description = "GitHub repository allowed to assume the deployment role"
+  type        = string
+  default     = "Azubjoe/finzla-deployment-platform"
+}
+
+variable "github_branch" {
+  description = "GitHub branch allowed to assume the deployment role"
+  type        = string
+  default     = "main"
+}
