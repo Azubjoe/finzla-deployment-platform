@@ -1,0 +1,117 @@
+name: Deploy Application
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Deploy application to AWS"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: finzla-dev-deployment
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: eu-west-1
+  ECR_REPOSITORY: finzla-cloud-platform-dev-app
+  ECS_CLUSTER: finzla-cloud-platform-dev-cluster
+  ECS_SERVICE: finzla-cloud-platform-dev-service
+  ECS_TASK_DEFINITION: finzla-cloud-platform-dev-app
+  HEALTH_CHECK_URL: ${{ vars.HEALTH_CHECK_URL }}
+  CONTAINER_NAME: app
+
+jobs:
+  deploy:
+    name: Deploy to ECS
+    if: ${{ inputs.deploy == true }}
+    runs-on: ubuntu-latest
+
+    environment: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+          docker build \
+            -t "$IMAGE_URI" \
+            .
+
+          docker push "$IMAGE_URI"
+
+          echo "IMAGE_URI=$IMAGE_URI" >> "$GITHUB_ENV"
+
+      - name: Download current task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition "$ECS_TASK_DEFINITION" \
+            --query taskDefinition \
+            > task-definition.json
+
+      - name: Update task definition image
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ env.IMAGE_URI }}
+
+      - name: Deploy ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+            
+      - name: Verify application health
+        run: |
+          if [ -z "$HEALTH_CHECK_URL" ]; then
+            echo "HEALTH_CHECK_URL is not configured."
+            exit 1
+          fi
+
+          echo "Checking application health"
+
+          for attempt in {1..10}; do
+            HTTP_STATUS=$(curl \
+              --silent \
+              --output /dev/null \
+              --write-out "%{http_code}" \
+              --location \
+              "$HEALTH_CHECK_URL" || true)
+
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Application health check passed."
+              exit 0
+            fi
+
+            echo "Attempt $attempt/10 returned HTTP $HTTP_STATUS"
+            sleep 15
+          done
+
+          echo "Application health check failed."
+          exit 1
