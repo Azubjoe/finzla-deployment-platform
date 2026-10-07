@@ -2,8 +2,9 @@
 
 # Finzla Cloud Deployment Platform
 
-A small cloud deployment platform demonstrating how a containerized Python
-service can be built, validated, secured, and deployed to AWS using Terraform
+This is a small AWS cloud deployment platform for a new
+backend service demonstrating how a containerized Python
+application is built, validated, secured, and deployed to AWS using Terraform
 and GitHub Actions.
 
 The solution uses Amazon ECS with AWS Fargate, Amazon ECR, an Application Load
