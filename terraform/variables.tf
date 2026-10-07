@@ -68,8 +68,11 @@ variable "ecs_task_memory" {
 variable "acm_certificate_arn" {
   description = "ARN of the ACM certificate used by the HTTPS ALB listener"
   type        = string
-  default     = null
-  nullable    = true
+
+  validation {
+    condition     = can(regex("^arn:aws:acm:", var.acm_certificate_arn))
+    error_message = "acm_certificate_arn must be a valid AWS ACM certificate ARN."
+  }
 }
 
 variable "github_repository" {
