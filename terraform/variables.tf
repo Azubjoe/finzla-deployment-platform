@@ -83,3 +83,9 @@ variable "github_branch" {
   type        = string
   default     = "main"
 }
+
+variable "container_image_tag" {
+  description = "Docker image tag deployed to the ECS service"
+  type        = string
+  default     = "bootstrap"
+}

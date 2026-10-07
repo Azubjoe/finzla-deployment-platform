@@ -34,7 +34,7 @@ resource "aws_ecs_task_definition" "app" {
   container_definitions = jsonencode([
     {
       name      = "app"
-      image     = "${aws_ecr_repository.app.repository_url}:bootstrap"
+      image     = "${aws_ecr_repository.app.repository_url}:${var.container_image_tag}"
       essential = true
 
       portMappings = [
@@ -52,7 +52,7 @@ resource "aws_ecs_task_definition" "app" {
         },
         {
           name  = "APP_VERSION"
-          value = "bootstrap"
+          value = var.container_image_tag
         }
       ]
 
@@ -79,6 +79,11 @@ resource "aws_ecs_service" "app" {
   task_definition = aws_ecs_task_definition.app.arn
   desired_count   = 2
   launch_type     = "FARGATE"
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
 
   network_configuration {
     subnets          = aws_subnet.private[*].id
