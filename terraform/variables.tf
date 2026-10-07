@@ -46,3 +46,21 @@ variable "private_subnet_cidrs" {
     "10.0.12.0/24"
   ]
 }
+
+variable "container_port" {
+  description = "Port exposed by the application container"
+  type        = number
+  default     = 8000
+}
+
+variable "ecs_task_cpu" {
+  description = "CPU units allocated to the Fargate task"
+  type        = number
+  default     = 256
+}
+
+variable "ecs_task_memory" {
+  description = "Memory allocated to the Fargate task in MiB"
+  type        = number
+  default     = 512
+}
